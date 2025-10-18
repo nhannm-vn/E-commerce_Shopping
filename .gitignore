@@ -24,4 +24,7 @@ dist-ssr
 
 # Gai bug hehehe
 src/apis/*
-src/constants/config.ts
+
+# Environment files
+.env
+.env.*
