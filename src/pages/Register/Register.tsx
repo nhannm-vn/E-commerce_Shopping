@@ -11,6 +11,7 @@ import { ErrorResponse } from '../../types/utils.type'
 import { AppContext } from '../../contexts/app.context'
 import { useContext } from 'react'
 import Button from '../../components/Button'
+import { Helmet } from 'react-helmet'
 
 //interface này giúp cho nó hiểu
 //Form có gì và khi có lỗi thì sẽ dạng lỗi gì
@@ -87,6 +88,10 @@ function Register() {
 
   return (
     <div className='bg-orange'>
+      <Helmet>
+        <title>Đăng ký | Shopee Clone</title>
+        <meta name='description' content='Đăng ký tài khoảng vào dự án Shopee Clone' />
+      </Helmet>
       <div className='container'>
         <div className='grid grid-cols-1 py-12 lg:grid-cols-5 lg:py-32 lg:pr-10'>
           {/* màn hình lớn thì chiếm 2 cột, bắt đầu từ cột thứ 4.*/}

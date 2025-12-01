@@ -10,6 +10,7 @@ import Input from '../../components/Input'
 import { useContext } from 'react'
 import { AppContext } from '../../contexts/app.context'
 import Button from '../../components/Button'
+import { Helmet } from 'react-helmet'
 
 // Mình sẽ lợi dụng Schema để định nghĩa thay cho type thuần luôn
 type FormData = Pick<Schema, 'email' | 'password'>
@@ -68,6 +69,10 @@ function Login() {
 
   return (
     <div className='bg-orange'>
+      <Helmet>
+        <title>Đăng nhập | Shopee Clone</title>
+        <meta name='description' content='Đăng nhập vào dự án Shopee Clone' />
+      </Helmet>
       <div className='container'>
         <div className='grid grid-cols-1 py-12 lg:grid-cols-5 lg:py-32 lg:pr-10'>
           {/* màn hình lớn thì chiếm 3 cột, bắt đầu từ cột thứ 1 */}

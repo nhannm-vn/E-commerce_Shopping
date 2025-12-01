@@ -13,6 +13,8 @@ import { purchasesStatus } from '../../constants/purchase'
 import { toast } from 'react-toastify'
 import path from '../../constants/path'
 import { useTranslation } from 'react-i18next'
+import { Helmet } from 'react-helmet'
+import { convert } from 'html-to-text'
 
 function ProductDetail() {
   //i18n
@@ -179,8 +181,18 @@ function ProductDetail() {
 
   // Giúp tránh dấu ? làm không đẹp do dữ liệu có thể underfined
   if (!product) return null
+
   return (
     <div className='bg-gray-200 py-6'>
+      <Helmet>
+        <title>{product.name} | Shopee Clone</title>
+        <meta
+          name='description'
+          content={convert(product.description, {
+            limits: { ellipsis: '...', maxInputLength: 150 }
+          })}
+        />
+      </Helmet>
       <div className='container'>
         <div className='bg-white p-4 shadow'>
           {/* Vì có thể data là undefind nên cần phải check */}

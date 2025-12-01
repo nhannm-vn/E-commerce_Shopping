@@ -7,6 +7,7 @@ import categoryApi from '../../apis/category.api'
 import Product from './components/Product'
 import SortProductList from './components/SortProductList'
 import useQueryConfig from '../../hooks/useQueryConfig'
+import { Helmet } from 'react-helmet'
 
 function ProductList() {
   // Sử dụng custom hook
@@ -36,6 +37,10 @@ function ProductList() {
   })
   return (
     <div className='bg-gray-200 py-6'>
+      <Helmet>
+        <title>Trang chủ | Shopee Clone</title>
+        <meta name='description' content='Trang chủ dự án Shopee Clone' />
+      </Helmet>
       <div className='container'>
         {/* Vì có thể data là undefind nên cần phải check */}
         {productsData && (
