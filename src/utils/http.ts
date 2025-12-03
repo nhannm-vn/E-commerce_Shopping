@@ -3,7 +3,14 @@ import axios, { AxiosError, AxiosInstance } from 'axios'
 import HttpStatusCode from '../constants/httpStatusCode.enum'
 import { toast } from 'react-toastify'
 import { AuthResponse } from '../types/auth.type'
-import { clearLS, getAccessTokenFromLS, setAccessTokenToLS, setProfileToLS } from './auth'
+import {
+  clearLS,
+  getAccessTokenFromLS,
+  getRefreshTokenFromLS,
+  setAccessTokenToLS,
+  setProfileToLS,
+  setRefreshTokenToLS
+} from './auth'
 import path from '../constants/path'
 import config from '../constants/config'
 
@@ -12,13 +19,20 @@ class Http {
   instance: AxiosInstance
   // Dùng để lưu token khi login thành công phục vụ cho các route cần authentication
   private accessToken: string
+  // Dùng để lưu refreshToken khi login thành công phục vụ cho các route cần authentication
+  private refreshToken: string
+  // Dùng để tránh việc gọi nhiều lần hàm refreshToken
+  private refreshTokenRequest: Promise<string> | null
   constructor() {
     this.accessToken = getAccessTokenFromLS()
+    this.refreshToken = getRefreshTokenFromLS()
     this.instance = axios.create({
       baseURL: config.baseUrl,
       timeout: 1000,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'expire-access-token': 10, // 10s
+        'expire-refresh-token': 60 * 60 // 1h
       }
     })
     // Xử lí cho các request yêu cầu access_token
@@ -44,11 +58,16 @@ class Http {
         if (url === path.login || url === path.register || url === 'login' || url === 'register') {
           // Lưu ý phải đổi thành arrow thì mới thấy this
           this.accessToken = data.data.access_token
+          // Sau khi login nhận được token thì tiến hành set vào prop
+          this.refreshToken = data.data.refresh_token
+          // Tiến hành lưu token  vào localStorage
           setAccessTokenToLS(this.accessToken)
+          setRefreshTokenToLS(this.refreshToken)
           setProfileToLS(data.data.user)
         } else if (url === path.logout || url === 'logout') {
           // Khi logout thi se xoa
           this.accessToken = ''
+          this.refreshToken = ''
           clearLS()
         }
         return response
