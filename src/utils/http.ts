@@ -1,8 +1,11 @@
 // file chuyên dùng để config axios
 import axios, { AxiosError, AxiosInstance } from 'axios'
-import HttpStatusCode from '../constants/httpStatusCode.enum'
 import { toast } from 'react-toastify'
-import { AuthResponse } from '../types/auth.type'
+import { URL_LOGIN, URL_LOGOUT, URL_REFRESH_TOKEN, URL_REGISTER } from '../apis/auth.api'
+import config from '../constants/config'
+import HttpStatusCode from '../constants/httpStatusCode.enum'
+import { AuthResponse, RefreshTokenResponse } from '../types/auth.type'
+import { ErrorResponse } from '../types/utils.type'
 import {
   clearLS,
   getAccessTokenFromLS,
@@ -11,8 +14,7 @@ import {
   setProfileToLS,
   setRefreshTokenToLS
 } from './auth'
-import path from '../constants/path'
-import config from '../constants/config'
+import { isAxiosExpiredTokenError, isAxiosUnauthorizedError } from './utils'
 
 //keeptrying
 class Http {
@@ -26,6 +28,7 @@ class Http {
   constructor() {
     this.accessToken = getAccessTokenFromLS()
     this.refreshToken = getRefreshTokenFromLS()
+    this.refreshTokenRequest = null
     this.instance = axios.create({
       baseURL: config.baseUrl,
       timeout: 1000,
@@ -55,7 +58,7 @@ class Http {
         const data = response.data as AuthResponse
         const { url } = response.config
         // Khi login hoac register thanh cong thi luu token vao LS
-        if (url === path.login || url === path.register || url === 'login' || url === 'register') {
+        if (url === URL_LOGIN || url === URL_REGISTER) {
           // Lưu ý phải đổi thành arrow thì mới thấy this
           this.accessToken = data.data.access_token
           // Sau khi login nhận được token thì tiến hành set vào prop
@@ -64,7 +67,7 @@ class Http {
           setAccessTokenToLS(this.accessToken)
           setRefreshTokenToLS(this.refreshToken)
           setProfileToLS(data.data.user)
-        } else if (url === path.logout || url === 'logout') {
+        } else if (url === URL_LOGOUT) {
           // Khi logout thi se xoa
           this.accessToken = ''
           this.refreshToken = ''
@@ -73,30 +76,95 @@ class Http {
         return response
       },
       // Nếu có lỗi thì nó sẽ nhảy vào khu vực này
-      function (error: AxiosError) {
+      //***Lưu ý phải là arrow function thì mới thấy được this
+      (error: AxiosError) => {
         // Các lỗi khác thì sẽ là object theo back-end quy định
         // Tuy nhiên đây là trường hợp các lỗi còn lại thì nó sẽ chỉ có message do axios render
         // Nghĩa là lỗi này sẽ khác với lỗi mã 422
-        if (error.response?.status !== HttpStatusCode.UnprocessableEntity) {
+        //**Đây sẽ toast những lỗi khác với lỗi 422 và 401
+        if (
+          ![HttpStatusCode.UnprocessableEntity, HttpStatusCode.Unauthorized].includes(error.response?.status as number)
+        ) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data: any | undefined = error.response?.data
-          // Nếu mà trong data không có message thì hãy hãy message ở ngoài error luôn đi
           const message = data?.message || error.message
           toast.error(message)
         }
+
+        // Lỗi unauthorized 401 sẽ có rất nhiều trường hợp:
+        // + Token không đúng
+        // + Không có token
+        // + Token hết hạn
+
         // Nếu có lỗi 401 nghĩa là có lỗi hết hạn access_token
-        if (error.response?.status === HttpStatusCode.Unauthorized) {
-          // Khi đấy thì mình sẽ xóa localStorage
+        if (isAxiosUnauthorizedError<ErrorResponse<{ name: string; message: string }>>(error)) {
+          const config = error.response?.config || { headers: {}, url: '' }
+          const { url } = config
+          // Trường hợp token hết hạn và request đó không phải là request refresh token
+          //thì chúng ta mới tiến hành gọi refresh token
+          //Note: Nghĩa là những api hết hạn thông thường thì chúng ta tiến hành gọi refresh token
+          //còn nếu api refresh token mà lỗi 401 thì không được gọi refresh token nữa
+          if (isAxiosExpiredTokenError(error) && url !== URL_REFRESH_TOKEN) {
+            //Việc này tránh call api refresh token 2 lần
+            this.refreshTokenRequest = this.refreshTokenRequest
+              ? this.refreshTokenRequest
+              : this.handleRefreshToken().finally(() => {
+                  // Sau khi thực hiện xong thì gán về null để lần sau có thể gọi tiếp
+                  // Giữ refreshTokenRequest trong 10s cho những request tiếp theo nếu có 401 thì dùng
+                  setTimeout(() => {
+                    this.refreshTokenRequest = null
+                  }, 10000)
+                })
+            return this.refreshTokenRequest.then((access_token) => {
+              // Nghĩa là chúng ta tiếp tục gọi lại request cũ vừa bị lỗi
+              // Nói cách khác là chúng ta set lại access_token mới lấy được vào trong header của config
+              return this.instance({ ...config, headers: { ...config.headers, authorization: access_token } })
+            })
+          }
+
+          // *Chỉ refresh token khi nào nó hết hạn và api call khác với api refresh token
+
+          // Còn những trường hợp như token không đúng
+          // không truyền token,
+          // token hết hạn nhưng gọi refresh token bị fail(api call refresh access token bị lỗi)
+          // thì tiến hành xóa local storage và toast message
+
           clearLS()
-          // Mình phải refresh thì context sẽ lấy ra thì lúc này sẽ hoàn chỉnh
+          this.accessToken = ''
+          this.refreshToken = ''
+          // *Chúng ta chỉ show những message của các lỗi 401 khác, còn nếu mà lỗi 401 do hết
+          // hạn token thì không show vì nó đã được xử lí ở trên rồi
+          toast.error(error.response?.data.data?.message || error.response?.data.message)
           // window.location.reload()
-          //**Nếu xài cách này thì page sẽ refresh thêm 1 lần nó sẽ không hay
-          //==> cách khắc phục dùng event target đồng thời dùng hàm reset chuyển về default cho các thành
-          //phần trong context
         }
         return Promise.reject(error)
       }
     )
+  }
+  // Tiến hành refreshToken, thì thì refreshToken sẽ gọi trọng axios luôn vì nó hỗ trợ gọi trong này luôn
+  private handleRefreshToken() {
+    // trong hàm này mình sẽ tiến hành gọi tới instance nghĩa là axios và tiến hành call api
+    // khi mà gọi api thành công thì mình sẽ then để lấy access_token mới để khi hàm này chạy thì có được access_token mới luôn
+    return this.instance
+      .post<RefreshTokenResponse>(URL_REFRESH_TOKEN, {
+        refresh_token: this.refreshToken
+      })
+      .then((res) => {
+        // Lấy access_token mới
+        const { access_token } = res.data.data
+        // Cập nhật lại accessToken trong localStorage
+        setAccessTokenToLS(access_token)
+        // Set lại accessToken trong Http
+        this.accessToken = access_token
+        return access_token
+      })
+      .catch((error) => {
+        // *Xảy ra lỗi khi refreshToken hết hạn và lúc này sẽ logout ra
+        clearLS()
+        this.accessToken = ''
+        this.refreshToken = ''
+        throw error
+      })
   }
 }
 

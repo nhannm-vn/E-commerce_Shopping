@@ -28,7 +28,7 @@ export default function Input({
   rules,
   classNameInput = 'p-3 w-full outline-none border border-gray-300 focus:border-gray-500 rounded-sm focus:shadow-md',
   classNameError = 'mt-1 text-red-600 min-h-[1.3rem] text-sm',
-  classNameEye = 'absolute right-3 top-0 size-5 translate-y-1/2 cursor-pointer',
+  classNameEye = 'absolute top-[8px] right-[5px] h-5 w-5 cursor-pointer',
   ...rest
 }: Props) {
   //State để ẩn hiện mắt
@@ -52,7 +52,7 @@ export default function Input({
   }
 
   return (
-    <div className={className}>
+    <div className={'relative ' + className}>
       <input
         // name='email'
         className={classNameInput}

@@ -96,6 +96,7 @@ function Login() {
                 register={register}
                 type='password'
                 placeholder='Password'
+                classNameEye='absolute right-[5px] h-5 w-5 cursor-pointer top-[12px]'
                 className='mt-2'
                 errrorMessage={errors.password?.message}
                 autoComplete='on'

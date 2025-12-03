@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios'
 import HttpStatusCode from '../constants/httpStatusCode.enum'
 import userImage from '../assets/images/user.svg'
+import { ErrorResponse } from '../types/utils.type'
 // Type Predicate
 // utils này sẽ giúp check xem có phải lỗi của axios hay không
 // mình còn muốn sau khi chạy func này thì error của mình nó sẽ chuyển thành type nhất định
@@ -14,6 +15,21 @@ export function isAxiosError<T>(error: unknown): error is AxiosError<T> {
 
 export function isAxiosUnprocessableEntity<FormError>(error: unknown): error is AxiosError<FormError> {
   return isAxiosError(error) && error.response?.status == HttpStatusCode.UnprocessableEntity
+}
+
+// check lỗi 401
+export function isAxiosUnauthorizedError<UnauthorizedError>(error: unknown): error is AxiosError<UnauthorizedError> {
+  return isAxiosError(error) && error.response?.status == HttpStatusCode.Unauthorized
+}
+// check lỗi trong trường hợp token hết hạn
+// thì đầu tiên lỗi này phải là lỗi 401 đã
+export function isAxiosExpiredTokenError<UnauthorizedError>(error: unknown): error is AxiosError<UnauthorizedError> {
+  return (
+    // Đầu tiên nó phải là lỗi 401
+    isAxiosUnauthorizedError<ErrorResponse<{ name: string; message: string }>>(error) &&
+    // trong response name có thêm thuộc tính name EXPIRED_TOKEN
+    error.response?.data?.data?.name === 'EXPIRED_TOKEN'
+  )
 }
 
 // Khi bạn viết AxiosError<FormError>, thì FormError chính là generic
