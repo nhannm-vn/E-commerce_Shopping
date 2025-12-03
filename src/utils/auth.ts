@@ -15,7 +15,9 @@ export const clearLS = () => {
   localStorage.removeItem('access_token')
   localStorage.removeItem('refresh_token')
   localStorage.removeItem('profile')
+  // Khi chạy hàm clearLS đồng thời sẽ tạo ra thêm một sự kiện clearLS
   const clearLSEvent = new Event('clearLS')
+  // Sau đó sẽ dispatch (phát) sự kiện đó ra ngoài => lúc này sẽ qua bên App toàn cục lắng nghe sự kiện này và thực hiện hàm reset
   LocalStorageEventTarget.dispatchEvent(clearLSEvent)
 }
 

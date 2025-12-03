@@ -34,8 +34,8 @@ class Http {
       timeout: 1000,
       headers: {
         'Content-Type': 'application/json',
-        'expire-access-token': 10, // 10s
-        'expire-refresh-token': 60 * 60 // 1h
+        'expire-access-token': 5, // 10s
+        'expire-refresh-token': 10 // 1h
       }
     })
     // Xử lí cho các request yêu cầu access_token
