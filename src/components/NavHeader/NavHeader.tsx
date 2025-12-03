@@ -97,7 +97,10 @@ function NavHeader() {
               >
                 Tài Khoản Của Tôi
               </Link>
-              <Link to='/' className='block w-full bg-white px-4 py-3 text-left hover:bg-slate-100 hover:text-cyan-500'>
+              <Link
+                to={path.historyPurchase}
+                className='block w-full bg-white px-4 py-3 text-left hover:bg-slate-100 hover:text-cyan-500'
+              >
                 Đơn Mua
               </Link>
               <button
