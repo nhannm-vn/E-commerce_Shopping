@@ -8,6 +8,8 @@ import { SuccessResponse } from './utils.type'
 // AuthResponse là kiểu dữ liệu mà server  trả về cụ thể cho register/login luôn
 export type AuthResponse = SuccessResponse<{
   access_token: string
-  expires: string
+  refresh_token: string
+  expires_refresh_token: number
+  expires: number
   user: User
 }>
