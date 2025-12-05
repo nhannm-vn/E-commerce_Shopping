@@ -19,39 +19,38 @@ import RejectedRoute from './PrivateRouters/RejectedRoute'
 function Routers() {
   const routers = createBrowserRouter([
     {
-      // Mặc định sẽ có thể coi được trang sản phẩm
-      // xác thực hay chưa đều có thể đứng ở đây
-      path: path.home,
-      // Thằng này giúp ưu tiên lúc nào vào cũng là nó
-      index: true,
-      element: (
-        <MainLayout>
-          <ProductList />
-        </MainLayout>
-      )
+      path: '',
+      element: <MainLayout />,
+      children: [
+        {
+          // Mặc định sẽ có thể coi được trang sản phẩm
+          // xác thực hay chưa đều có thể đứng ở đây
+          path: path.home,
+          // Thằng này giúp ưu tiên lúc nào vào cũng là nó
+          index: true,
+          element: <ProductList />
+        },
+        {
+          path: path.productDetail,
+          element: <ProductDetail />
+        },
+        {
+          path: '*',
+          element: <NotFound />
+        }
+      ]
     },
+
+    // Protected route: chỉ cho phép những người đã xác thực rồi mới vào được
     {
-      path: path.productDetail,
-      element: (
-        <MainLayout>
-          <ProductDetail />
-        </MainLayout>
-      )
-    },
-    {
-      // Nếu xác thực rồi và match vs /profile thì cho vào tiếp
-      // không thì back ra /login
-      // path: '' = không đổi đường link, chỉ chèn thêm logic bảo vệ.
       path: '',
       element: <ProtectedRoute />,
       // Nested route
       children: [
-        // _Match đường dẫn mới render ra element ở dưới
-        // Nghĩa là nếu mà thỏa element trên và có muốn vào tiếp nữa mà đường dẫn matches path thì
-        // sẽ đi render ra được Profile luôn. Còn không thì phải về lại login
-        // _Khi login vao roi thi moi cho vao trang cart
         {
           path: path.cart,
+          //*Thằng này xài có duy nhât một cái CartLayout nên thôi không cần thêm outlet vào CartLayout
+          //để tối ưu nữa nên viết theo kiểu bọc children luôn
           element: (
             <CartLayout>
               <Cart />
@@ -64,61 +63,55 @@ function Routers() {
         //chứ không cần đặt cái page con ở giữa
         {
           path: path.user,
-          element: (
-            <MainLayout>
-              <UserLayout />
-            </MainLayout>
-          ),
+          element: <MainLayout />,
           // Nghĩa là nếu thằng path nào mà match trên url thì nó sẽ đưa component đó thay thế cho outlet
           //ở bên trong UserLayout
           children: [
             {
-              path: path.profile,
-              element: <Profile />
-            },
-            {
-              path: path.changePassword,
-              element: <ChangePassword />
-            },
-            {
-              path: path.historyPurchase,
-              element: <HistoryPurchase />
+              path: '',
+              element: <UserLayout />,
+              children: [
+                {
+                  path: path.profile,
+                  element: <Profile />
+                },
+                {
+                  path: path.changePassword,
+                  element: <ChangePassword />
+                },
+                {
+                  path: path.historyPurchase,
+                  element: <HistoryPurchase />
+                }
+              ]
             }
           ]
         }
       ]
     },
+    // Rejected route: chỉ cho phép những người chưa xác thực mới vào được
     {
-      // Nếu chưa xác thực thì mới cho vào /login hoặc /register
-      // còn nếu xác thực rồi thì không cho vào. Cho vào luôn trang sp
       path: '',
+      // Trong thằng RejectedRoute có sử dụng outlet để chứa các trang con nên không cần thêm
+      //outlet vào RegisterLayout nữa
+      //***Note: đây là cách setup route có thể đưa oulet vào RegisterLayout mà vẫn giữ outlet trong RejectedRoute
       element: <RejectedRoute />,
       children: [
         {
-          path: path.login,
-          element: (
-            <RegisterLayout>
-              <Login />
-            </RegisterLayout>
-          )
-        },
-        {
-          path: path.register,
-          element: (
-            <RegisterLayout>
-              <Register />
-            </RegisterLayout>
-          )
+          path: '',
+          element: <RegisterLayout />,
+          children: [
+            {
+              path: path.login,
+              element: <Login />
+            },
+            {
+              path: path.register,
+              element: <Register />
+            }
+          ]
         }
       ]
-    },
-    {
-      path: '*',
-      element: (
-        <MainLayout>
-          <NotFound />
-        </MainLayout>
-      )
     }
   ])
 
