@@ -6,7 +6,6 @@ import Routers from './routers/configRouters'
 
 function App() {
   const { reset } = useContext(AppContext)
-
   // Khi chúng ta lắng nghe một sự kiện thì phải để nó trong useEffect
   // *Khi sự kiện clearLS được phát ra khi hàm clearLS được gọi để logout và xóa token khỏi localStorage
   //thì App sẽ lắng nghe sự kiện đó và tiến hành gọi hàm reset để reset lại toàn bộ trạng thái trong AppContext
