@@ -3,7 +3,7 @@ import type { Preview } from '@storybook/react-vite'
 import '../src/index.css'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AppProvider } from '../src/contexts/app.context'
-import { BrowserRouter } from 'react-router-dom'
+import { MemoryRouter } from 'react-router-dom'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -33,13 +33,15 @@ const preview: Preview = {
   },
   decorators: [
     (Story) => (
-      <BrowserRouter>
+      <MemoryRouter
+        initialEntries={['/users/Điện-Thoại-Vsmart-Active-3-6GB64GB--Hàng-Chính-Hãng-i-60afb2c76ef5b902180aacba']}
+      >
         <QueryClientProvider client={queryClient}>
           <AppProvider>
             <Story />
           </AppProvider>
         </QueryClientProvider>
-      </BrowserRouter>
+      </MemoryRouter>
     )
   ]
 }
